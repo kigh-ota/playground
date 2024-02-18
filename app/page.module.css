@@ -14,4 +14,10 @@
   display: inline-block;
   width: 2rem;
   height: 2rem;
+  color: lightgray;
+  transition: color .5s;
+}
+
+.icon:hover {
+  color: black;
 }
