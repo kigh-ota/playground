@@ -1,3 +1,4 @@
+import GithubMark from './GithubMark';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -10,8 +11,12 @@ export default function Home() {
             <h1>Kaiichiro Ota</h1>
             <ul>
               <li>
-                <a href="https://github.com/kigh-ota" target="_blank">
-                  GitHub (kigh-ota)
+                <a
+                  href="https://github.com/kigh-ota"
+                  target="_blank"
+                  className={styles.icon}
+                >
+                  <GithubMark />
                 </a>
               </li>
               <li>

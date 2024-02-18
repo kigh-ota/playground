@@ -9,3 +9,9 @@
   border: 1px solid lightgray;
   padding: 0.5rem;
 }
+
+.icon {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+}
