@@ -1,3 +1,10 @@
 export default function Home() {
-  return <main>Hello</main>;
+  return (
+    <>
+      <header>
+        <h1>Kaiichiro Ota</h1>
+      </header>
+      <main>Hello</main>
+    </>
+  );
 }
