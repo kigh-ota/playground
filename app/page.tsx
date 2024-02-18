@@ -1,4 +1,5 @@
 import GithubMark from './GithubMark';
+import XLogo from './XLogo';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -20,8 +21,12 @@ export default function Home() {
                 </a>
               </li>
               <li>
-                <a href="https://x.com/kigh" target="_blank">
-                  X (@kigh)
+                <a
+                  href="https://x.com/kigh"
+                  target="_blank"
+                  className={styles.icon}
+                >
+                  <XLogo />
                 </a>
               </li>
               <li>
