@@ -4,7 +4,23 @@ export function start(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d')!;
 
   const cursor = new Cursor(0.5 * canvas.width, 0.5 * canvas.height);
-  const target = new Target(0, 0, canvas.width, canvas.height);
+  const targets: Target[] = [];
+
+  function addTarget() {
+    targets.push(
+      new Target(
+        Math.floor(Math.random() * canvas.width),
+        Math.floor(Math.random() * canvas.height),
+        canvas.width,
+        canvas.height
+      )
+    );
+  }
+
+  for (let i = 0; i < 10; i++) {
+    addTarget();
+  }
+
   const bullets: Bullet[] = [];
   const input = new InputState();
 
@@ -13,17 +29,19 @@ export function start(canvas: HTMLCanvasElement) {
   }
 
   const cb = () => {
+    // pre-rendering step
     cursor.step(input);
     if (input.spacePressed()) {
       console.log('fire!');
       bullets.push(new Bullet(cursor.x(), cursor.y()));
       console.log(bullets.length);
     }
-    target.step();
 
+    targets.forEach((t) => t.step());
     bullets
       .map((b, i) => {
-        if (!b.step()) {
+        b.step();
+        if (!b.live()) {
           return i;
         } else {
           return null;
@@ -34,13 +52,39 @@ export function start(canvas: HTMLCanvasElement) {
         i !== null && bullets.splice(i, 1);
       });
 
+    // collision detection of bullets and targets
+    bullets
+      .filter((b) => b.canCollide())
+      .forEach((b) => {
+        targets
+          .map((t, i) => {
+            console.log(targets.length, b.x, t.x(), b.y, t.y());
+            if (
+              Math.abs(b.x - t.x()) < 0.5 * TARGET_SIZE &&
+              Math.abs(b.y - t.y()) < 0.5 * TARGET_SIZE
+            ) {
+              console.log('hit!');
+              return i;
+            } else {
+              return null;
+            }
+          })
+          .reverse()
+          .forEach((i) => {
+            i !== null && targets.splice(i, 1);
+          });
+      });
+
+    // rendering
     clearScreen();
     cursor.draw(ctx);
-    target.draw(ctx);
+    targets.forEach((t) => t.draw(ctx));
     bullets.forEach((b) => b.draw(ctx));
 
+    // post-rendering step
     input.step();
 
+    // continue loop
     requestAnimationFrame(cb);
   };
 
@@ -48,9 +92,8 @@ export function start(canvas: HTMLCanvasElement) {
   requestAnimationFrame(cb);
 }
 
-const BULLET_LIFETIME = 60; // frames
-const BULLET_INIT_SIZE = BULLET_LIFETIME;
-
+const BULLET_LIFETIME = 20; // frames
+const BULLET_INIT_SIZE = 60;
 class Bullet {
   private elapsed: number;
 
@@ -58,18 +101,32 @@ class Bullet {
     this.elapsed = 0;
   }
 
-  step(): boolean {
-    this.elapsed++;
+  live() {
     return this.elapsed <= BULLET_LIFETIME;
   }
 
+  canCollide() {
+    return this.elapsed === BULLET_LIFETIME;
+  }
+
+  step() {
+    if (!this.live()) {
+      return;
+    }
+    this.elapsed++;
+  }
+
   draw(ctx: CanvasRenderingContext2D) {
-    const size = BULLET_INIT_SIZE - this.elapsed;
+    if (!this.live()) {
+      return;
+    }
+    const size = BULLET_INIT_SIZE - 3 * this.elapsed;
     ctx.strokeRect(this.x - 0.5 * size, this.y - 0.5 * size, size, size);
   }
 }
 
 const CURSOR_SIZE = 60;
+const CURSOR_SPEED: number = 2.0;
 class Cursor {
   private x_: number;
   private y_: number;
@@ -88,10 +145,10 @@ class Cursor {
   }
 
   step(input: InputState) {
-    input.left() && this.x_--;
-    input.right() && this.x_++;
-    input.up() && this.y_--;
-    input.down() && this.y_++;
+    input.left() && (this.x_ -= CURSOR_SPEED);
+    input.right() && (this.x_ += CURSOR_SPEED);
+    input.up() && (this.y_ -= CURSOR_SPEED);
+    input.down() && (this.y_ += CURSOR_SPEED);
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -104,7 +161,8 @@ class Cursor {
   }
 }
 
-const TARGET_SIZE = 60;
+const TARGET_SIZE = 30;
+const TARGET_SPEED = 1.0;
 class Target {
   private x_: number;
   private y_: number;
@@ -128,21 +186,15 @@ class Target {
   }
 
   step() {
-    this.x_++;
-    this.y_++;
+    this.x_ += TARGET_SPEED;
+    this.y_ += TARGET_SPEED;
     this.x_ %= this.canvasWidth;
     this.y_ %= this.canvasHeight;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.beginPath();
-    ctx.arc(
-      this.x() - 0.5 * TARGET_SIZE,
-      this.y() - 0.5 + TARGET_SIZE,
-      0.5 * TARGET_SIZE,
-      0,
-      2 * Math.PI
-    );
+    ctx.arc(this.x(), this.y(), 0.5 * TARGET_SIZE, 0, 2 * Math.PI);
     ctx.fillStyle = 'red';
     ctx.fill();
     ctx.closePath();
